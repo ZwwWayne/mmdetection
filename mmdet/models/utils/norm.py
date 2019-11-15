@@ -1,10 +1,12 @@
 import torch.nn as nn
+from .slowfast_bn import SlowFastBatchNorm2d
 
 norm_cfg = {
     # format: layer_type: (abbreviation, module)
     'BN': ('bn', nn.BatchNorm2d),
     'SyncBN': ('bn', nn.SyncBatchNorm),
     'GN': ('gn', nn.GroupNorm),
+    'SlowFastBN': ('bn', SlowFastBatchNorm2d)
     # and potentially 'SN'
 }
 
