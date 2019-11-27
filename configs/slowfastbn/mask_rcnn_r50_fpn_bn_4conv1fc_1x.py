@@ -1,6 +1,5 @@
 # model settings
-norm_cfg = dict(type='SlowFastBN', steps=8, alpha=0.5, 
-                momentum=0.25, requires_grad=True)
+norm_cfg = dict(type='BN', requires_grad=True)
 
 model = dict(
     type='MaskRCNN',
@@ -124,7 +123,7 @@ test_cfg = dict(
 dataset_type = 'CocoDataset'
 data_root = 'data/coco/'
 img_norm_cfg = dict(
-    mean=[102.9801, 115.9465, 122.7717], std=[1.0, 1.0, 1.0], to_rgb=False)
+    mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
 train_pipeline = [
     dict(type='LoadImageFromFile'),
     dict(type='LoadAnnotations', with_bbox=True, with_mask=True),

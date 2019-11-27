@@ -1,9 +1,9 @@
 # model settings
-norm_cfg = dict(type='BN', requires_grad=True)
-
+norm_cfg = dict(type='SlowFastBN', steps=8, alpha=0.5, 
+                momentum=0.25, requires_grad=True)
 model = dict(
     type='MaskRCNN',
-    pretrained='torchvision://resnet50',
+    pretrained='modelzoo://resnet50',
     backbone=dict(
         type='ResNet',
         depth=50,
@@ -16,8 +16,7 @@ model = dict(
         type='FPN',
         in_channels=[256, 512, 1024, 2048],
         out_channels=256,
-        num_outs=5,
-        norm_cfg=norm_cfg),
+        num_outs=5),
     rpn_head=dict(
         type='RPNHead',
         in_channels=256,
@@ -47,7 +46,6 @@ model = dict(
         target_means=[0., 0., 0., 0.],
         target_stds=[0.1, 0.1, 0.2, 0.2],
         reg_class_agnostic=False,
-        norm_cfg=norm_cfg,
         loss_cls=dict(
             type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0),
         loss_bbox=dict(type='SmoothL1Loss', beta=1.0, loss_weight=1.0)),
@@ -62,7 +60,6 @@ model = dict(
         in_channels=256,
         conv_out_channels=256,
         num_classes=81,
-        norm_cfg=norm_cfg,
         loss_mask=dict(
             type='CrossEntropyLoss', use_mask=True, loss_weight=1.0)))
 # model training and testing settings
@@ -123,7 +120,7 @@ test_cfg = dict(
 dataset_type = 'CocoDataset'
 data_root = 'data/coco/'
 img_norm_cfg = dict(
-    mean=[102.9801, 115.9465, 122.7717], std=[1.0, 1.0, 1.0], to_rgb=False)
+    mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
 train_pipeline = [
     dict(type='LoadImageFromFile'),
     dict(type='LoadAnnotations', with_bbox=True, with_mask=True),
@@ -186,11 +183,12 @@ log_config = dict(
         dict(type='TensorboardLoggerHook')
     ])
 # yapf:enable
+evaluation = dict(interval=1)
 # runtime settings
 total_epochs = 12
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = './work_dirs/mask_rcnn_r50_fpn_sfbn_1x'
+work_dir = './work_dirs/mask_rcnn_r50_fpn_1x'
 load_from = None
 resume_from = None
 workflow = [('train', 1)]
