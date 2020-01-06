@@ -4,6 +4,7 @@ import torch.nn.functional as F
 from mmcv.cnn import normal_init
 
 from mmdet.core import delta2bbox
+from torchvision.ops import nms as torch_nms  # BC-compat
 from mmdet.ops import nms
 from ..registry import HEADS
 from .anchor_head import AnchorHead
@@ -89,7 +90,12 @@ class RPNHead(AnchorHead):
                 proposals = proposals[valid_inds, :]
                 scores = scores[valid_inds]
             proposals = torch.cat([proposals, scores.unsqueeze(-1)], dim=-1)
-            proposals, _ = nms(proposals, cfg.nms_thr)
+            # proposals, _ = nms(proposals, cfg.nms_thr)
+            
+            keep = torch_nms(proposals, scores, cfg.nms_thr)
+            proposals = torch.cat([proposals, scores.unsqueeze(-1)], dim=-1)
+            proposals = proposals[keep,:]
+            
             proposals = proposals[:cfg.nms_post, :]
             mlvl_proposals.append(proposals)
         proposals = torch.cat(mlvl_proposals, 0)
