@@ -3,6 +3,7 @@ import inspect
 import albumentations
 import mmcv
 import numpy as np
+from PIL import Image
 from albumentations import Compose
 from imagecorruptions import corrupt
 from numpy import random
@@ -118,6 +119,10 @@ class Resize(object):
             h, w = results['img'].shape[:2]
             w_scale = new_w / w
             h_scale = new_h / h
+            # use pil to resize
+            pil_image = Image.fromarray(results['img'])
+            pil_image = pil_image.resize((new_w, new_h), Image.BILINEAR)
+            img = np.asarray(pil_image)
         else:
             img, w_scale, h_scale = mmcv.imresize(
                 results['img'], results['scale'], return_scale=True)
@@ -142,11 +147,17 @@ class Resize(object):
             if results[key] is None:
                 continue
             if self.keep_ratio:
+                new_h, new_w = results['img_shape'][:2]
                 masks = [
-                    mmcv.imrescale(
-                        mask, results['scale'], interpolation='nearest')
+                    np.asarray(Image.fromarray(mask)
+                               .resize((new_w, new_h), Image.NEAREST))
                     for mask in results[key]
                 ]
+#                 masks = [
+#                     mmcv.imrescale(
+#                         mask, results['scale'], interpolation='nearest')
+#                     for mask in results[key]
+#                 ]
             else:
                 mask_size = (results['img_shape'][1], results['img_shape'][0])
                 masks = [
