@@ -10,6 +10,7 @@ from numpy import random
 
 from mmdet.core.evaluation.bbox_overlaps import bbox_overlaps
 from ..registry import PIPELINES
+import pycocotools.mask as maskUtils
 
 
 @PIPELINES.register_module
@@ -141,6 +142,21 @@ class Resize(object):
             bboxes[:, 0::2] = np.clip(bboxes[:, 0::2], 0, img_shape[1])
             bboxes[:, 1::2] = np.clip(bboxes[:, 1::2], 0, img_shape[0])
             results[key] = bboxes
+    
+    def _poly2mask(self, mask_ann, img_h, img_w):
+        if isinstance(mask_ann, list):
+            # polygon -- a single object might consist of multiple parts
+            # we merge all parts into one mask rle code
+            rles = maskUtils.frPyObjects(mask_ann, img_h, img_w)
+            rle = maskUtils.merge(rles)
+        elif isinstance(mask_ann['counts'], list):
+            # uncompressed RLE
+            rle = maskUtils.frPyObjects(mask_ann, img_h, img_w)
+        else:
+            # rle
+            rle = mask_ann
+        mask = maskUtils.decode(rle)
+        return mask
 
     def _resize_masks(self, results):
         for key in results.get('mask_fields', []):
@@ -148,16 +164,26 @@ class Resize(object):
                 continue
             if self.keep_ratio:
                 new_h, new_w = results['img_shape'][:2]
+                resized_polygon = []
+                for mask in results[key]:
+                    resized_polygon.append(
+                        [(np.array(res).reshape(-1, 2) * results['scale_factor'][:2]).reshape(-1).tolist()
+                         for res in mask]
+                    )
                 masks = [
-                    np.asarray(Image.fromarray(mask)
-                               .resize((new_w, new_h), Image.NEAREST))
-                    for mask in results[key]
+                    self._poly2mask(mask, new_h, new_w) 
+                    for mask in resized_polygon
                 ]
 #                 masks = [
-#                     mmcv.imrescale(
-#                         mask, results['scale'], interpolation='nearest')
+#                     np.asarray(Image.fromarray(mask)
+#                                .resize((new_w, new_h), Image.NEAREST))
 #                     for mask in results[key]
 #                 ]
+# #                 masks = [
+# #                     mmcv.imrescale(
+# #                         mask, results['scale'], interpolation='nearest')
+# #                     for mask in results[key]
+# #                 ]
             else:
                 mask_size = (results['img_shape'][1], results['img_shape'][0])
                 masks = [
