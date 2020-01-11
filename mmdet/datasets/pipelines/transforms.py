@@ -13,6 +13,22 @@ from ..registry import PIPELINES
 import pycocotools.mask as maskUtils
 
 
+def poly2mask(mask_ann, img_h, img_w):
+    if isinstance(mask_ann, list):
+        # polygon -- a single object might consist of multiple parts
+        # we merge all parts into one mask rle code
+        rles = maskUtils.frPyObjects(mask_ann, img_h, img_w)
+        rle = maskUtils.merge(rles)
+    elif isinstance(mask_ann['counts'], list):
+        # uncompressed RLE
+        rle = maskUtils.frPyObjects(mask_ann, img_h, img_w)
+    else:
+        # rle
+        rle = mask_ann
+    mask = maskUtils.decode(rle)
+    return mask
+
+
 @PIPELINES.register_module
 class Resize(object):
     """Resize images & bbox & mask.
@@ -142,21 +158,6 @@ class Resize(object):
             bboxes[:, 0::2] = np.clip(bboxes[:, 0::2], 0, img_shape[1])
             bboxes[:, 1::2] = np.clip(bboxes[:, 1::2], 0, img_shape[0])
             results[key] = bboxes
-    
-    def _poly2mask(self, mask_ann, img_h, img_w):
-        if isinstance(mask_ann, list):
-            # polygon -- a single object might consist of multiple parts
-            # we merge all parts into one mask rle code
-            rles = maskUtils.frPyObjects(mask_ann, img_h, img_w)
-            rle = maskUtils.merge(rles)
-        elif isinstance(mask_ann['counts'], list):
-            # uncompressed RLE
-            rle = maskUtils.frPyObjects(mask_ann, img_h, img_w)
-        else:
-            # rle
-            rle = mask_ann
-        mask = maskUtils.decode(rle)
-        return mask
 
     def _resize_masks(self, results):
         for key in results.get('mask_fields', []):
@@ -164,16 +165,12 @@ class Resize(object):
                 continue
             if self.keep_ratio:
                 new_h, new_w = results['img_shape'][:2]
-                resized_polygon = []
+                masks = []
                 for mask in results[key]:
-                    resized_polygon.append(
+                    masks.append(
                         [(np.array(res).reshape(-1, 2) * results['scale_factor'][:2]).reshape(-1).tolist()
                          for res in mask]
                     )
-                masks = [
-                    self._poly2mask(mask, new_h, new_w) 
-                    for mask in resized_polygon
-                ]
 #                 masks = [
 #                     np.asarray(Image.fromarray(mask)
 #                                .resize((new_w, new_h), Image.NEAREST))
@@ -261,6 +258,26 @@ class RandomFlip(object):
             raise ValueError(
                 'Invalid flipping direction "{}"'.format(direction))
         return flipped
+    
+    def coor_flip(self, coors, img_shape, direction):
+        """Flip coors horizontally.
+
+        Args:
+            coors(ndarray): shape (..., 2*k)
+            img_shape(tuple): (height, width)
+        """
+        assert coors.shape[-1] % 2 == 0
+        flipped = coors.copy()
+        if direction == 'horizontal':
+            w = img_shape[1]
+            flipped[..., 0::2] = w - coors[..., 0::2]
+        elif direction == 'vertical':
+            h = img_shape[0]
+            flipped[..., 1::2] = h - coors[..., 1::2]
+        else:
+            raise ValueError(
+                'Invalid flipping direction "{}"'.format(direction))
+        return flipped
 
     def __call__(self, results):
         if 'flip' not in results:
@@ -279,15 +296,30 @@ class RandomFlip(object):
                                               results['flip_direction'])
             # flip masks
             for key in results.get('mask_fields', []):
-                results[key] = [
-                    mmcv.imflip(mask, direction=results['flip_direction'])
-                    for mask in results[key]
-                ]
+                flipped_polygon = []
+                for mask in results[key]:
+                    flipped_polygon.append(
+                        [self.coor_flip(np.array(res),
+                                        results['img_shape'], 
+                                        results['flip_direction']).tolist()
+                         for res in mask]
+                    )
+                results[key] = flipped_polygon
+#                 results[key] = [
+#                     mmcv.imflip(mask, direction=results['flip_direction'])
+#                     for mask in results[key]
+#                 ]
 
             # flip segs
             for key in results.get('seg_fields', []):
                 results[key] = mmcv.imflip(
                     results[key], direction=results['flip_direction'])
+        for key in results.get('mask_fields', []):
+            new_h, new_w = results['img_shape'][:2]
+            results[key] = [
+                poly2mask(mask, new_h, new_w) 
+                for mask in results[key]
+            ]
         return results
 
     def __repr__(self):
