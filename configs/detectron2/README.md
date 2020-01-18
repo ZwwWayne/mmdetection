@@ -14,8 +14,8 @@ We adopt the same setting as those in Detectron2 and compare the accuracy and sp
 |Detectron2| R-50      | 1x      |     |   |   | 37.9   |     -    |
 |MMDet | R-50      | 3x      |     |   |   | 40.2   |     -    |
 |Detectron2| R-50      | 3x      |     |   |   | 40.2   |     -    |
-|MMDet | R-101      | 3x      |     |   |   | 42.0   |     -    |
-|Detectron2| R-101      | 3x      |     |   |   | 42.1   |     -    |
+|MMDet | R-101      | 3x      |     |   |   | 42.1   |     -    |
+|Detectron2| R-101      | 3x      |     |   |   | 42.0   |     -    |
 
 ### Mask RCNN
 |Code base| Backbone  | Lr schd |train time (s/iter)|inference time (s/im)|train mem (GB) | box AP | mask AP | Download |
