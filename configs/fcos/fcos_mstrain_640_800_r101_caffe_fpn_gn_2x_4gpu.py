@@ -21,7 +21,7 @@ model = dict(
         relu_before_extra_convs=True),
     bbox_head=dict(
         type='FCOSHead',
-        num_classes=81,
+        num_classes=80,
         in_channels=256,
         stacked_convs=4,
         feat_channels=256,
@@ -130,7 +130,7 @@ log_config = dict(
 # yapf:enable
 # runtime settings
 total_epochs = 24
-dist_params = dict(backend='nccl')
+dist_params = dict(backend='nccl', port=29501)
 log_level = 'INFO'
 work_dir = './work_dirs/fcos_mstrain_640_800_r101_caffe_fpn_gn_2x_4gpu'
 load_from = None

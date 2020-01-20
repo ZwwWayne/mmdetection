@@ -11,6 +11,7 @@ def point_target(proposals_list,
                  cfg,
                  gt_bboxes_ignore_list=None,
                  gt_labels_list=None,
+                 num_classes=80,
                  label_channels=1,
                  sampling=True,
                  unmap_outputs=True):
@@ -94,6 +95,7 @@ def point_target_single(flat_proposals,
                         gt_labels,
                         cfg,
                         label_channels=1,
+                        num_classes=80,
                         sampling=True,
                         unmap_outputs=True):
     inside_flags = valid_flags
@@ -130,6 +132,7 @@ def point_target_single(flat_proposals,
         if gt_labels is None:
             labels[pos_inds] = 1
         else:
+            labels += num_classes
             labels[pos_inds] = gt_labels[sampling_result.pos_assigned_gt_inds]
         if cfg.pos_weight <= 0:
             label_weights[pos_inds] = 1.0
