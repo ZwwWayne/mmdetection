@@ -44,7 +44,8 @@ class InstaBoost(object):
             bbox = bboxes[i]
             mask = masks[i]
             x1, y1, x2, y2 = bbox
-            bbox = [x1, y1, x2 - x1 + 1, y2 - y1 + 1]
+            assert (x2 - x1) >= 1 and (y2 - y1) >= 1
+            bbox = [x1, y1, x2 - x1, y2 - y1]
             anns.append({
                 'category_id': label,
                 'segmentation': mask,
@@ -59,7 +60,10 @@ class InstaBoost(object):
         gt_masks_ann = []
         for ann in anns:
             x1, y1, w, h = ann['bbox']
-            bbox = [x1, y1, x1 + w - 1, y1 + h - 1]
+            # TODO: more essential bug need to be fixed in instaboost
+            if w <= 0 or h <= 0:
+                continue
+            bbox = [x1, y1, x1 + w, y1 + h]
             gt_bboxes.append(bbox)
             gt_labels.append(ann['category_id'])
             gt_masks_ann.append(ann['segmentation'])
