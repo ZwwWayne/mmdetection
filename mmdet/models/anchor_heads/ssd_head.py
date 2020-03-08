@@ -76,7 +76,7 @@ class SSDHead(AnchorHead):
         for k in range(len(anchor_strides)):
             base_size = min_sizes[k]
             stride = anchor_strides[k]
-            ctr = ((stride - 1) / 2., (stride - 1) / 2.)
+            ctr = (stride / 2., stride / 2.)
             scales = [1., np.sqrt(max_sizes[k] / min_sizes[k])]
             ratios = [1.]
             for r in anchor_ratios[k]:
@@ -161,6 +161,7 @@ class SSDHead(AnchorHead):
             gt_labels_list=gt_labels,
             label_channels=1,
             sampling=False,
+            num_classes=self.num_classes,
             unmap_outputs=False)
         if cls_reg_targets is None:
             return None
