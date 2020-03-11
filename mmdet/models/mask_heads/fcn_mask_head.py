@@ -264,6 +264,12 @@ def _do_paste_mask(masks, boxes, img_h, img_w, skip_empty=True):
     img_y = (img_y - y0) / (y1 - y0) * 2 - 1
     img_x = (img_x - x0) / (x1 - x0) * 2 - 1
     # img_x, img_y have shapes (N, w), (N, h)
+    if torch.isinf(img_x).any():
+        inds = torch.where(torch.isinf(img_x))
+        img_x[inds] = 0
+    if torch.isinf(img_y).any():
+        inds = torch.where(torch.isinf(img_y))
+        img_y[inds] = 0
 
     gx = img_x[:, None, :].expand(N, img_y.size(1), img_x.size(1))
     gy = img_y[:, :, None].expand(N, img_y.size(1), img_x.size(1))
