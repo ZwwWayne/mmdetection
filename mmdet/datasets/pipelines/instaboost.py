@@ -77,6 +77,7 @@ class InstaBoost(object):
 
     def __call__(self, results):
         img = results['img']
+        orig_type = img.dtype
         anns = self._load_anns(results)
         if np.random.choice([0, 1], p=[1 - self.aug_ratio, self.aug_ratio]):
             try:
@@ -85,8 +86,9 @@ class InstaBoost(object):
                 raise ImportError('Please run "pip install instaboostfast" '
                                   'to install instaboostfast first.')
             anns, img = instaboost.get_new_data(
-                anns, img, self.cfg, background=None)
-        results = self._parse_anns(results, anns, img)
+                anns, img.astype(np.uint8), self.cfg, background=None)
+
+        results = self._parse_anns(results, anns, img.astype(orig_type))
         return results
 
     def __repr__(self):
