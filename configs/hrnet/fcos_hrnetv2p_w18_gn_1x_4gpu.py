@@ -33,7 +33,6 @@ model = dict(
         type='HRFPN',
         in_channels=[18, 36, 72, 144],
         out_channels=256,
-        stride=2,
         num_outs=5),
     bbox_head=dict(
         type='FCOSHead',
