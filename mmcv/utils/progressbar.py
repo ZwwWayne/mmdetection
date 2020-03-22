@@ -16,6 +16,7 @@ class ProgressBar(object):
             bar_width if bar_width <= max_bar_width else max_bar_width)
         self.completed = 0
         self.file = file
+        self.fps = None
         if start:
             self.start()
 
@@ -63,6 +64,7 @@ class ProgressBar(object):
                 'completed: {}, elapsed: {}s, {:.1f} tasks/s'.format(
                     self.completed, int(elapsed + 0.5), fps))
         self.file.flush()
+        self.fps = fps
 
 
 def track_progress(func, tasks, bar_width=50, file=sys.stdout, **kwargs):

@@ -29,6 +29,7 @@ def coco_eval(result_files,
             print('AR@{}\t= {:.4f}'.format(num, ar[i]))
         return
 
+    eval_results = dict()
     for res_type in result_types:
         if isinstance(result_files, str):
             result_file = result_files
@@ -49,6 +50,15 @@ def coco_eval(result_files,
         cocoEval.evaluate()
         cocoEval.accumulate()
         cocoEval.summarize()
+
+        metric = res_type
+        if metric == 'proposal':
+            eval_results[metric] = round(cocoEval.stats[6], 3)
+        else:
+            if metric == 'bbox':
+                eval_results['bbox_mAP'] = round(cocoEval.stats[0], 3)
+            elif metric == 'segm':
+                eval_results['segm_mAP'] = round(cocoEval.stats[0], 3)
 
         if classwise:
             # Compute per-category AP
@@ -79,6 +89,8 @@ def coco_eval(result_files,
             table_data += [result for result in results_2d]
             table = AsciiTable(table_data)
             print(table.table)
+
+    return eval_results
 
 
 def fast_eval_recall(results,
