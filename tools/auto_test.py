@@ -1,9 +1,10 @@
-import mmcv
-import subprocess
-import json
-import traceback
-import os
 import argparse
+import json
+import os
+import subprocess
+import traceback
+
+import mmcv
 import torch
 from mmcv.parallel import MMDataParallel
 from mmcv.runner import load_checkpoint
@@ -46,7 +47,11 @@ parser = argparse.ArgumentParser()
 parser.add_argument('model_path')
 args = parser.parse_args()
 
-# check if all models have corresponding configs
+if os.path.exists('valid_results.json'):
+    print('Please remove or rename the original valid_results.json')
+    exit()
+
+#  check if all models have corresponding configs
 print('parse model infos')
 print('-' * 40)
 model_infos = []
@@ -59,36 +64,36 @@ for model_family in os.listdir(args.model_path):
             config = os.path.join(model_family, model)
         else:
             config = os.path.join('configs', model_family, model)
-        if not config.endswith('py'):
-            config = config + '.py'
-        if not os.path.exists(config):
-            print('no this config: {}'.format(config))
-            exit()
 
         records = os.listdir(os.path.join(model_dir))
-        cpt = [r for r in records if r[-3:] == 'pth'][0]
-        cpt = os.path.join(model_dir, cpt)
-        log = [r for r in records if r[-4:] == 'json'][0]
-        log = os.path.join(model_dir, log)
+        config = [r for r in records if r[-2:] == 'py']
+        assert 0 < len(config) <= 1, 'check {} fails'.format(model_dir)
+        config = os.path.join(model_dir, config[0])
+
+        cpt = [r for r in records if r[-3:] == 'pth']
+        assert 0 < len(cpt) <= 1, 'check {} fails'.format(model_dir)
+        cpt = os.path.join(model_dir, cpt[0])
+
+        log = [r for r in records if r[-4:] == 'json']
+        assert 0 < len(log) <= 1, 'check {} fails'.format(model_dir)
+        log = os.path.join(model_dir, log[0])
+
         eval_results = parse_results(log)
         model_info['config'] = config
         model_info['checkpoint'] = cpt
         model_info['train_results'] = eval_results
         model_infos.append(model_info)
 
-print('collect total: {} models'.format(len(model_info)))
+print('collect total: {} models'.format(len(model_infos)))
 print()
 
-if os.path.exists('valid_results.json'):
-    print('Please remove or rename the original valid_results.json')
-    print()
-
 print('start valid models')
+
 for i, model_info in enumerate(model_infos):
     try:
-        print('valid [{}/{}] model'.format(i + 1, len(model_info)))
         config = model_info['config']
         cpt = model_info['checkpoint']
+        print('valid [{}/{}] model'.format(i + 1, len(model_infos)))
         print('config: {}'.format(config))
         print('checkpoint: {}'.format(cpt))
         print('-' * 40)
@@ -163,6 +168,8 @@ for i, model_info in enumerate(model_infos):
     except Exception:
         traceback.print_exc()
         valid_results['valid'] = None
+        del model
+        torch.cuda.empty_cache()
 
     with open('valid_results.json', 'a+') as f:
         mmcv.dump(valid_results, f, file_format='json')

@@ -29,7 +29,7 @@ def coco_eval(result_files,
         for i, num in enumerate(max_dets):
             print('AR@{}\t= {:.4f}'.format(num, ar[i]))
         eval_results['AR@100'] = ar[0]
-        return
+        return eval_results
 
     for res_type in result_types:
         if isinstance(result_files, str):
