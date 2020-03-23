@@ -23,13 +23,14 @@ def coco_eval(result_files,
         coco = COCO(coco)
     assert isinstance(coco, COCO)
 
+    eval_results = dict()
     if result_types == ['proposal_fast']:
         ar = fast_eval_recall(result_files, coco, np.array(max_dets))
         for i, num in enumerate(max_dets):
             print('AR@{}\t= {:.4f}'.format(num, ar[i]))
+        eval_results['AR@100'] = ar[0]
         return
 
-    eval_results = dict()
     for res_type in result_types:
         if isinstance(result_files, str):
             result_file = result_files
@@ -53,7 +54,7 @@ def coco_eval(result_files,
 
         metric = res_type
         if metric == 'proposal':
-            eval_results[metric] = round(cocoEval.stats[6], 3)
+            eval_results['AR@100'] = round(cocoEval.stats[6], 3)
         else:
             if metric == 'bbox':
                 eval_results['bbox_mAP'] = round(cocoEval.stats[0], 3)

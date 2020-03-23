@@ -80,8 +80,7 @@ print('collect total: {} models'.format(len(model_info)))
 print()
 
 if os.path.exists('valid_results.json'):
-    print('warning!!!!! delete original valid_results.json')
-    os.remove('valid_results.json')
+    print('Please remove or rename the original valid_results.json')
     print()
 
 print('start valid models')
@@ -128,7 +127,7 @@ for i, model_info in enumerate(model_infos):
         eval_types = []
         train_metrics = model_info['train_results']
         if 'AR@100' in train_metrics.keys():
-            eval_types.append('proposal')
+            eval_types.append('proposal_fast')
         if 'bbox_mAP' in train_metrics.keys():
             eval_types.append('bbox')
         if 'segm_mAP' in train_metrics.keys():
@@ -140,7 +139,7 @@ for i, model_info in enumerate(model_infos):
         if eval_types:
             print('Starting evaluate {}'.format(' and '.join(eval_types)))
             if eval_types == ['proposal_fast']:
-                result_file = args.out
+                result_file = 'tmp/tmp.pkl'
                 eval_results = coco_eval(result_file, eval_types, dataset.coco)
             else:
                 if not isinstance(outputs[0], dict):
