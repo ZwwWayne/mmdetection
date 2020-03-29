@@ -14,10 +14,7 @@ model = dict(
         frozen_stages=1,
         style='pytorch',
         dcn=dict(
-            modulated=False,
-            groups=32,
-            deformable_groups=1,
-            fallback_on_stride=False),
+            type='DCN', deformable_groups=1, fallback_on_stride=False),
         stage_with_dcn=(False, True, True, True)),
     neck=dict(
         type='FPN',
@@ -121,7 +118,7 @@ data = dict(
         pipeline=test_pipeline))
 # optimizer
 optimizer = dict(type='SGD', lr=0.01, momentum=0.9, weight_decay=0.0001)
-optimizer_config = dict(grad_clip=None)
+optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
 # learning policy
 lr_config = dict(
     policy='step',
