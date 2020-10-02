@@ -267,7 +267,7 @@ class Resize(object):
 
         if 'scale' not in results:
             if 'scale_factor' in results:
-                img_shape = results['img'].shape[:2]
+                img_shape = results['img_shape'][:2]
                 scale_factor = results['scale_factor']
                 assert isinstance(scale_factor, float)
                 results['scale'] = tuple(
