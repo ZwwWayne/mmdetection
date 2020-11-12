@@ -17,6 +17,7 @@ model = dict(
         in_channels=[96, 192, 432, 1008],
         out_channels=256,
         num_outs=5))
+data_root = 'data/coco/'
 img_norm_cfg = dict(
     # The mean and std are used in PyCls when training RegNets
     mean=[103.53, 116.28, 123.675],
